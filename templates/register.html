@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  <title>Register</title>
+{% endblock %}
+
+{% block content %}
+  <div class="jumbotron jumbotron-fluid bg-dark display-4 text-white p-5 mb-0">
+    <i class="far fa-address-book"></i>
+    Register
+  </div>
+  
+  <div class="container-fluid bg-warning p-5">
+    <div class="card col-6 mx-auto text-left">
+      <div class="card-body">
+        <h4 class="card-title text-center">Title</h4>
+        <form action="/register" method="post">
+          <div class="form-group">
+            <label for="">Username:</label>
+            <input type="text" name="username" class="form-control" id=""  placeholder="Username" required>
+          </div>
+          <div class="form-group">
+            <label for="">Password:</label>
+            <input type="password" name="password" class="form-control" id=""  placeholder="Password" required>
+          </div>
+          <div class="form-group text-right mb-0">
+            <input type="submit" class="btn btn-outline-dark" value="Submit">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

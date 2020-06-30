@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  <title>Review</title>
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-3">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-2 text-center">
+          <div class="card p-3">
+            <img src="/static/{{post.image}}" alt="" style="width: 100px; height: 100px;">
+          </div>
+        </div>
+        <div class="col-md-10">
+          <div class="card border-0 text-left p-3">
+            <h4 class="card-title text-danger">{{post.name}}</h4>
+            <!-- <p>★★★★★ 5.0 out of 5.0</p> -->
+            <p>{{summary}} of 5.0</p>
+            <p class="text-primary">{{post.reviews|length}} customer ratings</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container mb-3">
+    <div class="container-fluid">
+      <div class="card bg-info text-light p-3">
+        <p>Add A Review</p>
+        <form action="/review2" method="post">
+          <div class="form-group mb-0">
+            <input type="hidden" name="item_id" class="form-control" value="{{post.id}}">
+            <input type="text" name="title" class="form-control" id="" placeholder="Title" required> 
+            <input type="text" name="content" class="form-control" id="" placeholder="Content" required>
+            <!-- check box for rating-->
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="radio1" value="1.0" checked>
+              <label class="form-check-label" for="radio1">1.0</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="radio2" value="2.0">
+              <label class="form-check-label" for="radio2">2.0</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="radio3" value="3.0">
+              <label class="form-check-label" for="radio3">3.0</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="radio4" value="4.0">
+              <label class="form-check-label" for="radio4">4.0</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="radio5" value="5.0">
+              <label class="form-check-label" for="radio5">5.0</label>
+            </div>
+          </div>
+          <div class="form-group text-right mb-0">
+            <input type="submit" value="Write a customer review" class="btn btn-sm btn-outline-light">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="container mb-3">
+    <div class="container-fluid">
+      {% if post.reviews|length > 0 %}
+      <div class="card text-left p-3">
+        {% for review in post.reviews %}
+          <div class="row">
+            <div class="col-md-2 text-center">
+              <img class="rounded-circle mb-3" src="/static/profile.png" alt="" style="width: 50px; height: 50px;">
+              <h5>{{review.editor_reviews.name}}</h5>
+            </div>
+            <div class="col-md-10">
+              <h5>{{review.title}}</h5>
+              <p class="mb-1">
+                {% if review.score == 1.0 %}
+                  ★☆☆☆☆
+                {% elif review.score == 2.0 %}
+                  ★★☆☆☆
+                {% elif review.score == 3.0 %}
+                  ★★★☆☆
+                {% elif review.score == 4.0 %}
+                  ★★★★☆
+                {% elif review.score == 5.0 %}
+                  ★★★★★
+                {% endif %}
+                </p>
+              <p class="mb-1">{{review.content}}</p>
+              <p class="text-right mb-0">{{review.update_at}}</p>
+            </div>
+          </div>
+          {% if not loop.last %}
+            <div class="border-bottom my-3"></div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <em class="text-danger">No Review...</em>
+      {% endif %}
+    </div>
+  </div>
+  {% endblock %}
