@@ -5,21 +5,29 @@
 
 # contains our functions to connect HTML and Python¥
 import json
-from flask import Flask, render_template, request, redirect, url_for, flash,jsonify      # importing necssary flask modules
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify      # importing necssary flask modules
 from .app import app                  # connection to app.py
 from .database import db              # connection to db
 from passlib.hash import sha256_crypt # encryping the password - to change random strings
 # pip3 install passlib
-from .models.models import User, Posts, Reviews       # importing the models - to access the models
+from .models.models import User, Categories, Posts, Reviews, PostLike       # importing the models - to access the models
 from flask_login import login_user, LoginManager, login_required, current_user, logout_user   # this is for our login session and we will use the flask_login module
-
+# from datetime import datetime
+    
 login_manager = LoginManager() # creating an object of class LoginManager()
 login_manager.init_app(app) # passing the parameter and initialize app inseide the login_manager
 
+# Index
 @app.route("/")
 def index():
-  return render_template("index.html")
+  return render_template("index.html") # URL and to pass the data
 
+# About
+@app.route("/about")
+def about():
+  return render_template("about.html") # URL and to pass the data
+
+# User Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -31,10 +39,12 @@ def register():
     db.session.add(user)  # inserting to the table
     db.session.commit()   # commit
 
-    return redirect("/") # just URL
+    flash('You are now registered and can log in', 'success')
+    return render_template("login.html") # URL and to pass the data
 
   return render_template("register.html") # URL and to pass the data
 
+# Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -46,177 +56,225 @@ def login():
     if user is not None and user.name == username:
       validate = sha256_crypt.verify(password, user.password) # comparing the input data and the database data
       if validate == True:
-        login_user(user) # Flask
+        login_user(user)  # Flask
+        flash('You are now logged in','success')
+        return redirect(url_for('dashboard', id=user.id)) # to go to route directly and it is allowed to put only one argument
+
       else:
-        flash(u'Invalid Password Provided','login_error') # 
-        return redirect("/") # just URL
-
+        flash('Invalid Password Provided','danger') # 
+        return render_template("login.html")
+  
     else:
-      flash(u'User Is not yet registered','login_error')
-      flash(u'username is incorrect!','login_error')
-      return redirect("/") # just URL
+      flash('User is not found','danger')
+      flash('Username is incorrect!','danger')
+      return render_template("login.html")
 
-  # return redirect("/timeline", user=user.id)
-  return redirect(url_for('landing', id=user.id)) # to go to route directly and it is allowed to put only one argument
+  return render_template("login.html")
 
+# Logout
 @app.route('/logout')
 @login_required
 def logout():
   logout_user()
-  return redirect("/") # just URL
+  flash('You are now logged out','success')
+  return render_template("login.html")
 
 @login_manager.user_loader # checking the user and its id, so that it can access the /timeline
 def load_user(id):         # this means checking the id of the user that can access the /timeline
   return User.query.get(int(id)) # flask wants to know the current data
 
-@app.route("/landing")
-def landing():
-
+# Dashboard
+@app.route("/dashboard")
+@login_required
+def dashboard():
   # posts = Posts.query.filter_by().all()
-  posts = Posts.query.filter().order_by(Posts.update_at.desc()).all()
-  
+  posts = Posts.query.filter_by(user_id=current_user.id).order_by(Posts.update_at.desc()).all()
+  for post in posts:
+    post.likes.count()
+    post.average()
 
-  return render_template("landing.html", posts=posts) # URL and to pass the data
+  categories = Categories.query.filter_by().all()
 
-@app.route("/post", methods=['GET', 'POST', 'DELETE', 'PUT'])
-def post():
+  return render_template("dashboard.html", posts=posts, categories=categories) # URL and to pass the data
 
-  if request.method == "GET":
-    pass
-    # try: # try and expect to check if there is data on user.id
-    post = Posts.query.filter_by(id=request.args.get("postid")).first() # will return only one user data
-    return jsonify(postid=post.id, name=post.name, content=post.content, image=post.image)
+''' User '''
+# Profile
+@app.route("/profile/<int:id>")
+@login_required
+def profile(id):
 
-    # except AttributeError: # we will return the whole data at the users
-    #   posts = Posts.query.all()
-    #   postlist = []
-    #   for post in posts:
-    #     posttoadd = {
-    #       "id": post.id,
-    #       "user_id": post.user_id,
-    #       "name": post.name,
-    #       "content": post.content,
-    #       "image": post.image
-    #     }
-    #     postlist.append(posttoadd)
+  user = User.query.filter_by(id=id).first()
 
-    #   return jsonify(postlist=postlist)
+  return render_template("profile.html", user=user)
 
-  elif request.method == "POST":
+# Update User
+# @app.route("/user/update/<int:id>", methods=["GET", "POST"])
+@app.route("/profile/update/<int:id>", methods=["GET", "POST"])
+@login_required
+def upd_user(id):
+
+  if request.method == "POST":
+    # checking if the data is existed
+    user = User.query.filter_by(id=id).first()
+    user.name = request.form["username"]
+    user.email = request.form["email"]
+    user.bio = request.form["bio"]
+    db.session.commit()  # commit/persists/finalize those changes to the database
+    
+  flash('You are successful to update','success')
+  return redirect(url_for('profile', id=id))  # to go to route
+
+# Update User Image
+@app.route("/profile/image/update/<int:id>", methods=["GET", "POST"])
+@login_required
+def upd_user_image(id):
+
+  if request.method == "POST":
+    files = request.files["img"]
+    filename = files.filename
+    files.save("static/" + filename)
+    
+    user = User.query.filter_by(id=id).first()
+   
+    user.profile = filename
+    db.session.commit()  # commit/persists/finalize those changes to the database
+    
+  flash('You are successful to update','success')
+  return redirect(url_for('profile', id=id))  # to go to route
+
+# Select User for delete
+@app.route("/profile/delete/<int:id>")
+@login_required
+def disp_user_delete(id):
+
+  user = User.query.filter_by(id=id).first()
+
+  return render_template("del_user.html", user=user)
+
+# Delete User
+@app.route("/user/delete/<int:id>", methods=["GET", "POST"])
+@login_required
+def del_user(id):
+
+  if request.method == "POST":
+
+    # checking if the data is existed
+    user = User.query.filter_by(id=id).first()
+    password = request.form["password"]
+
+    validate = sha256_crypt.verify(password, user.password)
+    if validate == False:
+      flash('Invalid Password Provided', 'danger')
+      return render_template("del_user.html", user=user)
+
+    db.session.delete(user)
+    db.session.commit()   # commit/persists/finalize those changes to the database
+
+  logout_user()
+  flash('Thank you so much!', 'success')
+  return render_template("login.html")
+
+''' Post '''
+# Post
+@app.route("/item/<int:id>")
+def post(id):
+  post = Posts.query.filter_by(id=id).first() 
+  post.likes.count()
+  post.average()
+
+  return render_template("post.html", post=post) # URL and to pass the data
+
+# Add Post
+@app.route("/post/add", methods=['GET', 'POST'])
+@login_required
+def add_post():
+
+  if request.method == "POST":
     files = request.files["image"]
     filename = files.filename
 
     files.save("static/" + filename)
     
     user_id = current_user.id
+    category = request.form["category"]
     name = request.form["name"]
     content = request.form["content"]
     image = filename
 
-    post = Posts(user_id=user_id, name=name, content=content, image=image) # encryption
+    post = Posts(user_id=user_id, category_id=category, name=name, content=content, image=image) # encryption
     db.session.add(post)  # inserting to the table
     db.session.commit()   # commit
 
-    return redirect(url_for('landing', id=user_id))
+    flash('You are successful to add','success')
+    return redirect(url_for('dashboard', id=user_id))
 
-  elif request.method == "DELETE": # Delete
-    postid = request.form["postid"]
+  else:
+    categories = Categories.query.filter().all()
 
-    post = Posts.query.filter_by(id=postid).first()
-    db.session.delete(post)
-    db.session.commit()   # commit
+  return render_template("add_post.html", categories=categories)
 
-    return redirect(url_for('landing', id=current_user.id))
+# Update Post
+@app.route("/post/update/<int:id>", methods=["GET", "POST"])
+@login_required
+def upd_post(id):
 
-  elif request.method == "PUT": # Upadate
+  post = Posts.query.filter_by(id=id).first()
 
+  if request.method == "POST":
     files = request.files["image"]
     filename = files.filename
 
     files.save("static/" + filename)
     
     user_id = current_user.id
-    name = request.form["updatepostname"]
-    content = request.form["updatecontent"]
+    category = request.form["category"]
+    name = request.form["name"]
+    content = request.form["content"]
     image = filename
 
-    postid = request.form["updatepostid"]
-    post = Posts.query.filter_by(id=postid).first()
-    post.user_id = user_id
     post.name = name
+    post.category_id = category
     post.content = content
     post.image = image
+    db.session.commit()  # commit/persists/finalize those changes to the database
+    
+    flash('You are successful to update','success')
+    return redirect(url_for('dashboard', id=user_id))
 
-    db.session.commit()   # commit
+  else:
+    categories = Categories.query.filter().all()
+    
+  return render_template("upd_post.html", post=post, categories=categories)
 
-    return redirect(url_for('landing', id=current_user.id))
-
-@app.route("/updatePost/<int:id>")
-def updatePost(id):
+# Delete Post
+@app.route("/post/delete/<int:id>")
+def del_post(id):
   post = Posts.query.filter_by(id=id).first()
   db.session.delete(post)
+
   db.session.commit()   # commit
 
-  return redirect(url_for('landing', id=id))
+  flash('You are successful to delete','warning')
+  return redirect(url_for('dashboard', id=current_user.id))
 
-@app.route("/deletePost/<int:id>")
-def deletePost(id):
-  post = Posts.query.filter_by(id=id).first()
-  db.session.delete(post)
-  db.session.commit()   # commit
-
-  return redirect(url_for('landing', id=id))
-
-@app.route("/item/<int:id>")
-# @app.route("/item")
-def item(id):
-  # print(id)
-  post = Posts.query.filter_by(id=id).first() 
-
-  return render_template("item.html", post=post) # URL and to pass the data
-
+''' Review '''
+# Review
 @app.route("/review/<int:id>")
+@login_required
 def review(id):
-  # post = Posts.query.filter_by(id=id).order_by(Posts.update_at.desc()).first()
   post = Posts.query.filter_by(id=id).first()
+  post.average()
 
-  count = 0
-  for i in post.reviews:
-    count = count + i.score
-  try:
-    summary = count / len(post.reviews)
-  except ZeroDivisionError:
-    summary = 0
+  return render_template("review.html", post=post) # URL and to pass the data
 
-  return render_template("review.html", post=post, summary=summary) # URL and to pass the data
+# Add Review
+@app.route("/review/add/<int:id>", methods=['GET', 'POST'])
+@login_required
+def add_review(id):
 
-@app.route("/review2", methods=['GET', 'POST', 'DELETE', 'PUT'])
-def review2():
-
-  if request.method == "GET":
-    pass
-    # try: # try and expect to check if there is data on user.id
-    #   post = Posts.query.filter_by(id=id).first()
-    #   return render_template("item.html", post=post) # URL and to pass the data
-
-    # except AttributeError: # we will return the whole data at the users
-    #   posts = Posts.query.all()
-    #   postlist = []
-    #   for post in posts:
-    #     posttoadd = {
-    #       "id": post.id,
-    #       "user_id": post.user_id,
-    #       "name": post.name,
-    #       "content": post.content,
-    #       "image": post.image
-    #     }
-    #     postlist.append(posttoadd)
-
-    #   return jsonify(postlist=postlist)
-
-  elif request.method == "POST":
+  if request.method == "POST":
     user_id = current_user.id
-    item_id = request.form["item_id"]
+    item_id = id
     title = request.form["title"]
     content = request.form["content"]
     score = request.form["radio"]
@@ -225,4 +283,190 @@ def review2():
     db.session.add(review)  # inserting to the table
     db.session.commit()   # commit
 
+  flash('You are successful to add','success')
   return redirect(url_for('review', id=item_id))
+
+# Update Review
+@app.route("/review/update/<int:id>", methods=["GET", "POST"])
+@login_required
+def upd_review(id):
+
+  review = Reviews.query.filter_by(id=id).first()
+
+  if request.method == "POST":
+    review.title = request.form["title"]
+    review.content = request.form["content"]
+    review.score = request.form["radio"]
+    db.session.commit()  # commit/persists/finalize those
+    
+    flash('You are successful to update','success')
+    return redirect(url_for('review', id=review.item_id))  # to go to route
+
+  return render_template('upd_review.html', review=review)
+
+# Delete Review
+@app.route('/review/delete/<int:id>')
+@login_required
+def del_review(id):
+
+  review = Reviews.query.filter_by(id=id).first()
+
+  db.session.delete(review)
+  db.session.commit()
+
+  flash('You are successful to delete','warning')
+  return redirect(url_for('review', id=review.item_id))  # to go to route
+
+''' PostLike '''
+@app.route('/like/<int:post_id>/<action>')
+# @login_required
+def like_action(post_id, action):
+
+  post = Posts.query.filter_by(id=post_id).first_or_404()
+  
+  if action == 'like':
+    current_user.like_post(post)
+    db.session.commit()
+
+  if action == 'unlike':
+    current_user.unlike_post(post)
+    db.session.commit()
+    
+  return redirect(request.referrer)
+
+''' Category '''
+# Category
+@app.route("/category")
+# @login_required
+def category():
+  categories = Categories.query.filter_by().all()
+
+  return render_template("category.html", categories=categories) # URL and to pass the data
+
+# Add Category
+@app.route("/category/add", methods=['GET', 'POST'])
+# @login_required
+def add_category():
+
+  if request.method == "POST":
+    files = request.files["image"]
+    filename = files.filename
+
+    files.save("static/" + filename)
+    
+    name = request.form["name"]
+    image = filename
+
+    category = Categories(name=name, image=image) # encryption
+    db.session.add(category)  # inserting to the table
+    db.session.commit()   # commit
+
+  flash('You are successful to add','success')
+  return redirect(url_for('category'))
+
+# Update Category
+@app.route("/category/update/<int:id>", methods=['GET', 'POST'])
+# @login_required
+def upd_category(id):
+
+  category = Categories.query.filter_by(id=id).first()
+
+  if request.method == "POST":
+    files = request.files["image"]
+    filename = files.filename
+
+    files.save("static/" + filename)
+    
+    category.name = request.form["name"]
+    category.image = filename
+    db.session.commit()  # commit/persists/finalize those
+    
+    flash('You are successful to update','success')
+    return redirect(url_for('category'))
+
+  return render_template("upd_category.html", category=category) # URL and to pass the data
+
+# Delete Category
+@app.route('/category/delete/<int:id>')
+# @login_required
+def del_category(id):
+
+  category = Categories.query.filter_by(id=id).first()
+
+  db.session.delete(category)
+  db.session.commit()
+
+  flash('You are successful to delete','warning')
+  return redirect(url_for('category'))
+
+
+''' Search '''
+# Search
+@app.route("/search", methods=['GET', 'POST'])
+# @login_required
+def search():
+
+  categories = Categories.query.filter_by().all()
+
+  if request.method == "POST":
+    wherevalue = []
+    
+    # category
+    category = request.form["category"]
+    if not category == "":
+      wherevalue.append(Posts.category_id == category)
+    
+    # search keyword
+    search = request.form["search"]
+    if not search == "":
+      wherevalue.append(Posts.name.like("%{}%".format(search)))
+    
+    # score
+    score = request.form["radio"]
+    # it will apply after getting the post data
+    
+    # favorite
+    try:
+      favorite = request.form["checkbox"]
+
+      in_claus_val = []
+      postlikes = PostLike.query.filter_by(user_id=current_user.id).all()
+      if postlikes is not None:
+        for postlike in postlikes:
+          in_claus_val.append(postlike.item_id)
+
+        wherevalue.append(Posts.id.in_(in_claus_val))
+        
+      else:
+        return render_template("search.html", posts="", categories=categories)  # URL and to pass the data 
+
+    except:
+      # when the checkbox isn't checked
+      pass    
+
+    if category == "" and category == "" and score == "" and favorite == "":
+      flash('Input something...','warning')
+      return redirect(request.referrer)
+
+    whereclause = ""
+    for where in wherevalue:
+      whereclause = where + ", "
+
+    posts = Posts.query.filter(whereclause, Posts.user_id!=current_user.id).order_by(Posts.update_at.desc()).all()
+    # for post in posts:
+    #   post.average()
+    if not score == "":
+
+      tmp_posts = []
+      for post in posts:
+        # if the numberis grater than or equal to score
+        if post.average() >= float(score):
+          tmp_posts.append(post)
+      posts = tmp_posts
+
+  else:
+    posts = Posts.query.filter(Posts.user_id!=current_user.id).order_by(Posts.update_at.desc()).all()
+    # for post in posts:
+    #   post.average()
+
+  return render_template("search.html", posts=posts, categories=categories)  # URL and to pass the data

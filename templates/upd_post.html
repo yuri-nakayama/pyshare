@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  <title>Edit Post</title>
+{% endblock %}
+
+{% block content %}
+  <div class="jumbotron jumbotron-fluid text-secondary p-5 mb-0">
+    <div class="display-4">
+      <i class="fa fa-pencil"></i>
+      Edit Post
+    </div>
+  </div>
+  <div class="container mx-auto mt-3">
+    <form action="/post/update/{{post.id}}" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="">Category</label>
+        <select class="form-control" name="category" id="">
+          <option value="{{post.categories.id}}" selected>
+            {{post.categories.name}}
+          </option>
+          {% for category in categories %}
+          <option value="{{category.id}}">
+            {{category.name}}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="">Name</label>
+        <input type="text" name="name" id="name" class="form-control" value="{{post.name}}" required>
+      </div>
+      <div class="form-group">
+        <label for="">Content</label>
+        <input type="text" name="content" id="content" class="form-control" value="{{post.content}}" required>
+      </div>
+      <div class="form-group">
+        <label for="">Image File</label>
+        <div class="custom-file">
+          <input type="file" name="image" id="image" class="custom-file-input" required>
+          <label class="custom-file-label" for="">{{post.image}}</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="submit" class="btn btn-secondary btn-block" value="Save">
+      </div>
+    </form>
+  </div>
+{% endblock %}

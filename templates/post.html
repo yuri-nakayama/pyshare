@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  <title>Post</title>
+{% endblock %}
+
+{% block content %}
+  <div class="jumbotron jumbotron-fluid text-secondary p-5 mb-0">
+    <div class="display-4">
+      <i class="fa fa-info-circle"></i>
+      Post
+    </div>
+  </div>
+
+  <div class="container container-fluid bg p-3 mx-auto">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card text-left p-3">
+          <img src="/static/{{post.image}}" alt="" style="width: 500px; height: 500px;" class="img-fluid">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 text-left p-3">
+          <h4 class="card-title text-secondary">{{post.name}}</h4>
+          <p>{{post.content}}</p>
+          <p class="border rounded-pill text-center"><strong>by {{post.editor_posts.name}}</strong></p>
+          <div class="alert alert-secondary text-center">
+            <strong>{{post.categories.name}}</strong>
+          </div>
+          <div class="row mb-0">
+            <div class="col-6 text-left">
+              <p class="text-secondary mb-0">{{post.reviews|length}} reviews</p>
+            </div>
+            <div class="col-6 text-right">
+              <a href="/review/{{post.id}}">
+                {{post.average()}} of 5.0
+              </a>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6 text-left">
+              <a href="" class="text-secondary">{{post.likes.count()}} likes</a>
+            </div>
+            <div class="col-6 text-right">
+              {% if current_user.has_liked_post(post) %}
+              <a href="{{ url_for('like_action', post_id=post.id, action='unlike') }}" class="text-warning"><i
+                  class="fa fa-star"></i></a>
+              {% else %}
+              <a href="{{ url_for('like_action', post_id=post.id, action='like') }}" class="text-warning"><i
+                  class="fa fa-star-o"></i></a>
+              {% endif %}
+            </div>
+          </div>
+          <p class="text-right"><small>{{post.update_at}}</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

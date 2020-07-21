@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Update Category</title>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron jumbotron-fluid text-secondary p-5 mb-0">
+  <div class="display-4">
+    <i class="fas fa-layer-group"></i>
+    Update Category
+  </div>
+</div>
+<div class="container mx-auto mt-3 mb-3">
+  <div class="card bg-info text-light p-3">
+    <p>Update a category</p>
+    <form action="/category/update/{{category.id}}" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <div class="custom-file">
+          <input type="file" name="image" id="image" value="{{category.image}}" class="custom-file-input">
+          <label class="custom-file-label" for=""></label>
+        </div>
+        <input type="text" name="name" id="name" class="form-control" value="{{category.name}}" required>
+      </div>
+      <div class="form-group text-right mb-0">
+        <input type="submit" class="btn btn-sm btn-outline-light" value="Save">
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Reviews</title>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron jumbotron-fluid bg-info display-4 text-white p-5 mb-0">
+  <i class="far fa-address-book"></i>
+  Reviews
+</div>
+
+<div class="container-fluid p-3">    
+  <div class="card col-6 mx-auto text-left">
+    <div class="card-body">
+      <h4 class="card-title text-center">Update</h4>
+      <form action="/review/update/{{review.id}}" method="post">
+        <div class="form-group mb-3">
+          <input type="text" class="form-control" name="title" value="{{review.title}}">
+          <br>
+          <textarea class="form-control" name="content" id="content" cols="30" rows="5">{{review.content}}</textarea>
+          <br>
+          {% set radio_list = ['1.0', '2.0', '3.0', '4.0', '5.0'] %}
+          {% for radio in radio_list %}
+            {% if radio|float == review.score %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="radio" id="radio" value="{{radio}}" checked>
+                <label class="form-check-label" for="radio">{{radio}}</label>
+              </div>
+            {% else %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="radio" id="radio" value="{{radio}}">
+                <label class="form-check-label" for="radio">{{radio}}</label>
+              </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+        <!-- check box for rating-->
+
+        <div class="form-group text-right mb-0">
+          <input type="submit" class="btn btn-primary btn-block" value="Update">
+        </div>
+      </form>
+    </div>
+  </div>          
+</div>
+{% endblock %}

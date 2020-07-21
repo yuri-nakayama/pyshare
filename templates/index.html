@@ -1,53 +1,16 @@
 {% extends "layout.html" %}
 
-{% block style %}
-  <style>
-    .haikei4 {
-      background-image: url(img_01.jpg);
-      background-position: center center;
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-attachment: fixed;
-    }
-  </style>
-{% endblock %}
-
 {% block title %}
-  <title>Log in</title>
+<title>Home</title>
 {% endblock %}
 
 {% block content %}
-  <div class="jumbotron jumbotron-fluid bg-dark display-4 text-white p-5 mb-0">
-    <i class="fas fa-user"></i>
-    Log-in
+<div class="jumbotron text-center m-3">
+  <div class="container">
+    <h1 class="display-3">Welcome to Pyshare</h1>
+    <p class="lead">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo quos dolore sit vel laborum
+      blanditiis excepturi, fugiat mollitia maiores nulla culpa cupiditate facere omnis aliquam vitae cumque quas. Fugiat,
+      facilis?</p>
   </div>
-
-  <div class="container-fluid bg-warning p-5">
-    <div class="card col-6 mx-auto text-left">
-      <div class="card-body">
-        <h4 class="card-title text-center">Log-in</h4>
-        <form action="/login" method="post">
-          {% with errors = get_flashed_messages(category_filter=["login_error"])%}
-          {% if errors %}
-            {%for msg in errors%}
-            <p style="color:red;">{{msg}}</p>
-            {%endfor%}
-          {%endif%}
-          {% endwith%}
-          <div class="form-group">
-            <label for="">Username:</label>
-            <input type="text" name="username" class="form-control" id="" placeholder="Username" required>
-          </div>
-          <div class="form-group">
-            <label for="">Password:</label>
-            <input type="password" name="password" class="form-control" id="" placeholder="Password" required>
-          </div>
-          <div class="form-group text-right mb-0">
-            <a href="/register" class="btn btn-outline-dark">Register</a>
-            <button type="submit" class="btn btn-primary">Log in</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+</div>
 {% endblock %}

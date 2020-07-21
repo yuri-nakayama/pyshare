@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  <title>Log in</title>
+{% endblock %}
+
+{% block content %}
+  <div class="jumbotron jumbotron-fluid text-secondary p-5 mb-0">
+    <div class="display-4">
+      <i class="fas fa-user"></i>
+      Log in
+    </div>
+  </div>
+  <div class="container mx-auto mt-3">
+    <form action="/login" method="POST">
+      {% include "includes/_message.html" %}
+      <div class="form-group">
+        <label for="">Username</label>
+        <input type="text" name="username" class="form-control" id="" placeholder="Username" required>
+      </div>
+      <div class="form-group">
+        <label for="">Password</label>
+        <input type="password" name="password" class="form-control" id="" placeholder="Password" required>
+      </div>
+      <div class="form-group text-right">
+        <button type="submit" class="btn btn-secondary">Log in</button>
+      </div>
+    </form>
+    <div class="text-right">
+      <a href="/register" class="text-secondary">Don't have account?</a>
+    </div>
+  </div>
+{% endblock %}

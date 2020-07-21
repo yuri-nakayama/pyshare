@@ -1,0 +1,10 @@
+body {
+  background-image: url(/static/img_01.jpg);
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.checked {
+  color: orange;
+}
